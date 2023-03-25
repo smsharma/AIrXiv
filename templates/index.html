@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                processRefs: true
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <!-- <script src="./preload.js"></script> -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='pygments.css') }}">
+
+    <link rel="icon" type="image/png" href="favicon.png">
+    <title>AIrXiv</title>
+    <style>
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            color: #333;
+            margin-top: 15px;
+        }
+
+        code {
+            font-family: "Roboto Mono", Courier, monospace;
+            color: maroon;
+
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .highlight {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-left: 3px solid maroon;
+            font-size: 14px;
+            margin-bottom: 20px;
+            padding: 1em;
+        }
+
+        .container {
+            max-width: 800px;
+        }
+
+        .query-box {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        #result {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            /* Add space between the returned query and the footer */
+        }
+
+        #result img {
+            width: 120px;
+            height: auto;
+            margin-right: 10px;
+        }
+
+        #result p {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        #result .query {
+            font-weight: bold;
+            display: inline;
+            /* Show question to the right of "Query:" text */
+        }
+
+        #result em {
+            font-style: italic;
+            display: inline;
+            /* Show question to the right of "Query:" text */
+            margin-left: 5px;
+        }
+
+        #result p:first-child {
+            margin-bottom: 10px;
+        }
+
+        .btn-maroon {
+            background-color: maroon;
+            color: white;
+        }
+
+        footer {
+            text-align: center;
+            background-color: #f2f2f2;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .chat-box {
+            height: 525px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+        }
+
+        .message.user {
+            text-align: right;
+            color: maroon;
+            background-color: #e9e8e8;
+            padding: 5px;
+            border-radius: 5px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .message.bot {
+            text-align: left;
+            color: rgb(4, 28, 4);
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .left-side,
+        .right-side {
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        .left-side {
+            width: 50%;
+        }
+
+        .right-side {
+            width: 50%;
+            height: 100vh;
+            overflow-y: auto;
+            position: fixed;
+            top: 0;
+            right: 0;
+            border-left: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div class="left-side">
+
+        <div class="container">
+            <h2 class="text-center"><code>AIrXiv</code>: The arXiv Research Assistant</h2>
+            <div class="arxiv-id-form">
+                <p>Enter arXiv IDs in the box below to add papers to the database, then use the chat box to interact
+                    with them.
+                    Hit "Reset" to reset the papers database.</p>
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="arxiv-ids"
+                            placeholder="Enter comma-separated arXiv IDs">
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-maroon" id="add-arxiv-ids">Add</button>
+                            <button type="button" class="btn btn-secondary" id="reset-arxiv-ids">Reset</button>
+                            <button type="button" class="btn btn-info" id="toggle-pdf-pane">Toggle PDF Pane</button>
+
+                        </div>
+                    </div>
+                    <div id="arxiv-ids-success" class="alert alert-success mt-2" style="display: none;">
+                        Successfully added arXiv IDs.
+                    </div>
+                    <div id="arxiv-ids-list" class="mt-2"></div>
+                </div>
+            </div>
+            <div class="chat-box" id="chat-box"></div>
+            <form id="chat-form" class="query-box">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" name="query" id="query" class="form-control">
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-maroon">Ask</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <footer>&copy; 2023. <a href="https://smsharma.io/">Siddharth Mishra-Sharma</a>.
+            </footer>
+        </div>
+    </div>
+    <!-- <div class="right-side">
+        <iframe id="arxiv-pdf" src="" width="100%" height="100%"></iframe>
+    </div> -->
+
+
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const chatBox = document.getElementById('chat-box');
+        const queryInput = document.getElementById('query');
+        const arxivIdsSuccess = document.getElementById('arxiv-ids-success');
+        const arxivIdsInput = document.getElementById('arxiv-ids');
+        const addArxivIdsButton = document.getElementById('add-arxiv-ids');
+        const arxivIdsList = document.getElementById('arxiv-ids-list');
+        const resetArxivIdsButton = document.getElementById('reset-arxiv-ids');
+        const initialArxivIds = JSON.parse('{{ arxiv_ids | tojson | safe }}');
+        let sessionArxivIds = initialArxivIds;
+        const togglePdfPaneButton = document.getElementById('toggle-pdf-pane');
+        // const rightSide = document.querySelector('.right-side');
+        const leftSide = document.querySelector('.left-side');
+        let pdfPaneVisible = true;
+
+        // togglePdfPaneButton.addEventListener('click', () => {
+        //     pdfPaneVisible = !pdfPaneVisible;
+        //     rightSide.style.display = pdfPaneVisible ? 'inline-block' : 'none';
+        //     leftSide.style.width = pdfPaneVisible ? '50%' : '100%';
+        // });
+
+        togglePdfPaneButton.addEventListener('click', () => {
+            if (!pdfPaneVisible) {
+                const currentPDFUrl = document.getElementById('arxiv-pdf').src;
+                window.electron.createPDFView(currentPDFUrl);
+                pdfPaneVisible = true;
+            } else {
+                window.electron.closePDFView();
+                pdfPaneVisible = false;
+            }
+        });
+
+
+        function updateArxivIdsList() {
+            arxivIdsList.innerHTML = sessionArxivIds
+                .map(
+                    (id) =>
+                        `<span class="badge badge-secondary mr-1 arxiv-badge" data-arxivid="${id}">${id}</span>`
+                )
+                .join('');
+
+            const arxivBadges = document.querySelectorAll('.arxiv-badge');
+            arxivBadges.forEach((badge) =>
+                badge.addEventListener('click', (event) => {
+                    const arxivId = event.target.getAttribute('data-arxivid');
+                    document.getElementById('arxiv-pdf').src = `https://arxiv.org/pdf/${arxivId}.pdf#toolbar=0`;
+                })
+            );
+
+            // Load the PDF of the first arXiv paper
+            if (sessionArxivIds.length > 0) {
+                document.getElementById('arxiv-pdf').src = `https://arxiv.org/pdf/${sessionArxivIds[0]}.pdf#toolbar=0`;
+            } else {
+                document.getElementById('arxiv-pdf').src = '';
+            }
+        }
+
+
+        updateArxivIdsList();
+
+        addArxivIdsButton.addEventListener('click', async () => {
+            const arxivIds = arxivIdsInput.value.trim().split(',').map(id => id.trim());
+
+            if (!arxivIds.length) return;
+
+            sessionArxivIds = [...sessionArxivIds, ...arxivIds];
+
+            const response = await fetch('/add_arxiv_ids', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ arxiv_ids: sessionArxivIds }),
+            });
+
+            const { status } = await response.json();
+            if (status === 'success') {
+                arxivIdsInput.value = '';
+                arxivIdsSuccess.style.display = 'block';
+                setTimeout(() => {
+                    arxivIdsSuccess.style.display = 'none';
+                }, 3000); // Hide the success message after 3 seconds
+
+                updateArxivIdsList();
+            } else {
+                // You can add some error handling or message here if needed
+            }
+        });
+
+        resetArxivIdsButton.addEventListener('click', async () => {
+            sessionArxivIds = [];
+            updateArxivIdsList();
+
+            const response = await fetch('/reset_arxiv_ids', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+
+            const { status } = await response.json();
+            if (status === 'success') {
+                updateArxivIdsList(sessionArxivIds);
+            } else {
+                // You can add some error handling or message here if needed
+            }
+        });
+
+
+        function addMessage(text, sender, cssClasses) {
+            const message = document.createElement('div');
+            message.classList.add('message', sender);
+            message.innerHTML = text;
+
+            if (sender === 'bot') {
+                const dividerBefore = document.createElement('hr');
+                dividerBefore.style.margin = '5px 0';
+                chatBox.appendChild(dividerBefore);
+            }
+
+            chatBox.appendChild(message);
+
+            if (sender === 'bot') {
+                const style = document.createElement('style');
+                style.innerHTML = cssClasses;
+                message.appendChild(style);
+            }
+
+
+            // Update the following line
+            MathJax.typeset([message]);
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+
+        chatForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const query = queryInput.value.trim();
+            if (!query) return;
+
+            addMessage(query, 'user');
+            queryInput.value = '';
+
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query }),
+            });
+
+            const { result, css_classes } = await response.json();
+            addMessage(result, 'bot', css_classes);
+        });
+
+    </script>
+</body>
+
+</html>
