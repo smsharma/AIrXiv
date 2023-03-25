@@ -10,7 +10,11 @@
   "author": "Siddharth Mishra-Sharma",
   "license": "ISC",
   "dependencies": {
-    "electron-reload": "^2.0.0-alpha.1"
+    "electron-rebuild": "^3.2.9",
+    "electron-reload": "^2.0.0-alpha.1",
+    "node-pty": "^0.10.1",
+    "xterm": "^5.1.0",
+    "xterm-addon-attach": "^0.8.0"
   },
   "devDependencies": {
     "electron": "^23.2.0"

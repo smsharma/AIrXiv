@@ -16,7 +16,7 @@
             }
         };
     </script>
-    <script src="./preload.js"></script>
+    <script src="preload.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -26,7 +26,6 @@
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='pygments.css') }}">
-
     <link rel="icon" type="image/png" href="favicon.png">
     <title>AIrXiv</title>
     <style>
@@ -142,12 +141,6 @@
             font-size: 14px;
         }
 
-        .left-side,
-        .right-side {
-            display: inline-block;
-            vertical-align: top;
-        }
-
         .left-side {
             width: 50%;
         }
@@ -160,6 +153,12 @@
             top: 0;
             right: 0;
             border-left: 1px solid #ccc;
+        }
+
+        .copy-button {
+            margin-right: 5px;
+            position: relative;
+            top: -2px;
         }
     </style>
 </head>
@@ -182,7 +181,7 @@
                         <div class="input-group-append">
                             <button type="button" class="btn btn-maroon" id="add-arxiv-ids">Add</button>
                             <button type="button" class="btn btn-secondary" id="reset-arxiv-ids">Reset</button>
-                            <button type="button" class="btn btn-info" id="toggle-pdf-pane">Toggle PDF Pane</button>
+                            <button type="button" class="btn btn-info" id="toggle-pdf-pane">Toggle PDF/Code</button>
 
                         </div>
                     </div>
@@ -207,8 +206,14 @@
             </footer>
         </div>
     </div>
-    <div class="right-side">
-        <iframe id="arxiv-pdf" src="" width="100%" height="100%"></iframe>
+
+    <div id="pdf-container" class="right-side">
+        <webview id="arxiv-pdf" src="" style="width:100%; height:100%;"></webview>
+    </div>
+
+    <div id="jupyter-container" class="right-side" style="display: none;">
+        <webview id="jupyter-lab" src="http://127.0.0.1:8888/lab?token=dcc207b027ae2b99e0b346b814e8752227fdb6b4a14f7346"
+            style="width:100%; height:100%;"></webview>
     </div>
 
 
@@ -226,12 +231,23 @@
         const togglePdfPaneButton = document.getElementById('toggle-pdf-pane');
         const rightSide = document.querySelector('.right-side');
         const leftSide = document.querySelector('.left-side');
+
         let pdfPaneVisible = true;
 
+        const pdfContainer = document.getElementById('pdf-container');
+        const jupyterContainer = document.getElementById('jupyter-container');
+
         togglePdfPaneButton.addEventListener('click', () => {
+            // Toggle the visibility of the PDF pane
+            if (pdfPaneVisible) {
+                pdfContainer.style.display = 'none';
+                jupyterContainer.style.display = 'block';
+            } else {
+                pdfContainer.style.display = 'block';
+                jupyterContainer.style.display = 'none';
+            }
+            // Update the visibility state
             pdfPaneVisible = !pdfPaneVisible;
-            rightSide.style.display = pdfPaneVisible ? 'inline-block' : 'none';
-            leftSide.style.width = pdfPaneVisible ? '50%' : '100%';
         });
 
 
@@ -244,23 +260,25 @@
                 .join('');
 
             const arxivBadges = document.querySelectorAll('.arxiv-badge');
+            const arxivPdf = document.getElementById('arxiv-pdf');
+
             arxivBadges.forEach((badge) =>
                 badge.addEventListener('click', (event) => {
                     const arxivId = event.target.getAttribute('data-arxivid');
-                    document.getElementById('arxiv-pdf').src = `https://arxiv.org/pdf/${arxivId}.pdf#toolbar=0`;
+                    arxivPdf.src = `https://arxiv.org/pdf/${arxivId}.pdf`;
                 })
             );
 
-            // Load the PDF of the first arXiv paper
             if (sessionArxivIds.length > 0) {
-                document.getElementById('arxiv-pdf').src = `https://arxiv.org/pdf/${sessionArxivIds[0]}.pdf#toolbar=0`;
+                arxivPdf.src = `https://arxiv.org/pdf/${sessionArxivIds[0]}.pdf`;
             } else {
-                document.getElementById('arxiv-pdf').src = '';
+                arxivPdf.src = '';
             }
         }
 
-
-        updateArxivIdsList();
+        window.onload = function () {
+            updateArxivIdsList();
+        }
 
         addArxivIdsButton.addEventListener('click', async () => {
             const arxivIds = arxivIdsInput.value.trim().split(',').map(id => id.trim());
@@ -314,12 +332,14 @@
             message.innerHTML = text;
 
             if (sender === 'bot') {
-                const dividerBefore = document.createElement('hr');
-                dividerBefore.style.margin = '5px 0';
-                chatBox.appendChild(dividerBefore);
+                const codeBlocks = message.querySelectorAll('.highlight pre');
+                codeBlocks.forEach((codeBlock) => {
+                    const copyButton = document.createElement('button');
+                    copyButton.textContent = 'Copy';
+                    copyButton.classList.add('btn', 'btn-sm', 'btn-maroon', 'copy-button');
+                    codeBlock.parentNode.insertBefore(copyButton, codeBlock);
+                });
             }
-
-            chatBox.appendChild(message);
 
             if (sender === 'bot') {
                 const style = document.createElement('style');
@@ -327,6 +347,8 @@
                 message.appendChild(style);
             }
 
+            // Insert the copy button before appending the message to the chatbox
+            chatBox.appendChild(message);
 
             // Update the following line
             MathJax.typeset([message]);
@@ -351,6 +373,22 @@
 
             const { result, css_classes } = await response.json();
             addMessage(result, 'bot', css_classes);
+        });
+
+        document.addEventListener('click', async (event) => {
+            if (event.target.matches('.copy-button')) {
+                const codeBlock = event.target.nextElementSibling;
+                const textToCopy = codeBlock.textContent;
+                try {
+                    await navigator.clipboard.writeText(textToCopy);
+                    event.target.textContent = 'Copied!';
+                    setTimeout(() => {
+                        event.target.textContent = 'Copy';
+                    }, 1000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+            }
         });
 
     </script>
