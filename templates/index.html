@@ -16,7 +16,7 @@
             }
         };
     </script>
-    <!-- <script src="./preload.js"></script> -->
+    <script src="./preload.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -207,9 +207,9 @@
             </footer>
         </div>
     </div>
-    <!-- <div class="right-side">
+    <div class="right-side">
         <iframe id="arxiv-pdf" src="" width="100%" height="100%"></iframe>
-    </div> -->
+    </div>
 
 
     <script>
@@ -224,25 +224,14 @@
         const initialArxivIds = JSON.parse('{{ arxiv_ids | tojson | safe }}');
         let sessionArxivIds = initialArxivIds;
         const togglePdfPaneButton = document.getElementById('toggle-pdf-pane');
-        // const rightSide = document.querySelector('.right-side');
+        const rightSide = document.querySelector('.right-side');
         const leftSide = document.querySelector('.left-side');
         let pdfPaneVisible = true;
 
-        // togglePdfPaneButton.addEventListener('click', () => {
-        //     pdfPaneVisible = !pdfPaneVisible;
-        //     rightSide.style.display = pdfPaneVisible ? 'inline-block' : 'none';
-        //     leftSide.style.width = pdfPaneVisible ? '50%' : '100%';
-        // });
-
         togglePdfPaneButton.addEventListener('click', () => {
-            if (!pdfPaneVisible) {
-                const currentPDFUrl = document.getElementById('arxiv-pdf').src;
-                window.electron.createPDFView(currentPDFUrl);
-                pdfPaneVisible = true;
-            } else {
-                window.electron.closePDFView();
-                pdfPaneVisible = false;
-            }
+            pdfPaneVisible = !pdfPaneVisible;
+            rightSide.style.display = pdfPaneVisible ? 'inline-block' : 'none';
+            leftSide.style.width = pdfPaneVisible ? '50%' : '100%';
         });
 
 
