@@ -156,9 +156,32 @@
         }
 
         .copy-button {
-            margin-right: 5px;
+            font-size: 12px;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            z-index: 10;
+            padding: 2px 5px;
+        }
+
+        .paste-button {
+            font-size: 12px;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            z-index: 10;
+            padding: 2px 5px;
+        }
+
+        .code-container {
             position: relative;
-            top: -2px;
+        }
+
+        .input-group-append {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            display: flex;
         }
     </style>
 </head>
@@ -325,7 +348,6 @@
             }
         });
 
-
         function addMessage(text, sender, cssClasses) {
             const message = document.createElement('div');
             message.classList.add('message', sender);
@@ -334,10 +356,24 @@
             if (sender === 'bot') {
                 const codeBlocks = message.querySelectorAll('.highlight pre');
                 codeBlocks.forEach((codeBlock) => {
+                    const codeContainer = document.createElement('div');
+                    codeContainer.classList.add('code-container');
+                    codeBlock.parentNode.insertBefore(codeContainer, codeBlock);
+                    codeContainer.appendChild(codeBlock);
+
+                    const buttonGroup = document.createElement('div');
+                    buttonGroup.classList.add('input-group-append');
+                    codeContainer.appendChild(buttonGroup);
+
                     const copyButton = document.createElement('button');
                     copyButton.textContent = 'Copy';
                     copyButton.classList.add('btn', 'btn-sm', 'btn-maroon', 'copy-button');
-                    codeBlock.parentNode.insertBefore(copyButton, codeBlock);
+                    buttonGroup.appendChild(copyButton);
+
+                    // const newButton = document.createElement('button');
+                    // newButton.textContent = 'Paste';
+                    // newButton.classList.add('btn', 'btn-sm', 'btn-maroon', 'paste-button');
+                    // buttonGroup.appendChild(newButton);
                 });
             }
 
@@ -375,21 +411,26 @@
             addMessage(result, 'bot', css_classes);
         });
 
-        document.addEventListener('click', async (event) => {
-            if (event.target.matches('.copy-button')) {
-                const codeBlock = event.target.nextElementSibling;
-                const textToCopy = codeBlock.textContent;
-                try {
-                    await navigator.clipboard.writeText(textToCopy);
-                    event.target.textContent = 'Copied!';
-                    setTimeout(() => {
-                        event.target.textContent = 'Copy';
-                    }, 1000);
-                } catch (err) {
-                    console.error('Failed to copy text: ', err);
-                }
+        document.addEventListener('click', function (e) {
+            if (e.target && e.target.classList.contains('copy-button')) {
+                const codeBlock = e.target.parentNode.parentNode.querySelector('pre');
+                const button = e.target;
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(function () {
+                    button.textContent = originalText;
+                }, 1000);
+                const textarea = document.createElement('textarea');
+                textarea.textContent = codeBlock.textContent;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
             }
         });
+
+
+
 
     </script>
 </body>

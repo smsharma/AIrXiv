@@ -10,7 +10,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from utils.embedding_utils import get_embedding
 
-n_relevant_chunks = 4
+n_relevant_chunks = 2
 
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -22,7 +22,7 @@ def semantic_search(query_embedding, embeddings):
     return ranked_indices
 
 
-def answer_question(context, query, model="gpt-4", max_tokens=None, temperature=0.3):
+def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temperature=0.3):
     system_prompt = "You are a helpful scientific research assistant. You can write equations in LaTeX. You are an expert and helpful programmer and write correct code."
     prompt = f"Use this context to answer the question at the end. {context}. Fix any unknown LaTeX syntax elements. Do not use the \enumerate or \itemize LaTex environments -- write text bullet points. Question: {query}"
     response = openai.ChatCompletion.create(

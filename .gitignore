@@ -163,3 +163,5 @@ data/papers
 data/db
 data/videos
 .DS_Store
+
+node_modules
