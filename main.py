@@ -28,14 +28,18 @@ def index():
 
 @app.route("/ask", methods=["POST"])
 def ask():
+
+    data = request.get_json()
+
     query = request.json.get("query", "").strip()
     if not query:
         return jsonify({"result": "Please provide a question."})
 
-    # # Update the context with the current session's arXiv IDs
-    # assistant.context = {"arxiv_ids": session.get("arxiv_ids", [])}
+    data = request.get_json()
+    model = data["modelStr"]
+    dont_query_papers = data["queryBool"]
 
-    result = run(query)
+    result = run(query, model=model, query_papers=not dont_query_papers)
 
     sections = result.split("```")
     formatted_result = []

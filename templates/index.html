@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='pygments.css') }}">
     <link rel="icon" type="image/png" href="favicon.png">
     <title>AIrXiv</title>
@@ -112,7 +113,7 @@
         }
 
         .chat-box {
-            height: 525px;
+            height: 500px;
             overflow-y: scroll;
             border: 1px solid #ccc;
             margin-bottom: 10px;
@@ -183,6 +184,24 @@
             right: 0;
             display: flex;
         }
+
+        .options-header {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .divider {
+            text-align: center;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            font-family: 'Great Vibes', cursive;
+            font-size: 2rem;
+        }
+
+        .green {
+            background-color: green !important;
+            color: white !important;
+        }
     </style>
 </head>
 
@@ -209,7 +228,10 @@
                         </div>
                     </div>
                     <div id="arxiv-ids-success" class="alert alert-success mt-2" style="display: none;">
-                        Successfully added arXiv IDs.
+                        Successfully added paper.
+                    </div>
+                    <div id="arxiv-ids-fail" class="alert alert-success mt-2" style="display: none;">
+                        Failed to add paper.
                     </div>
                     <div id="arxiv-ids-list" class="mt-2"></div>
                 </div>
@@ -224,8 +246,29 @@
                         </div>
                     </div>
                 </div>
+                <div class="divider">⚛</div>
+                <div class="form-group">
+                    <label for="dropdown-model">Model:</label>
+                    <select class="form-control" id="dropdown-model">
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        <option value="gpt-4">gpt-4</option>
+                    </select>
+                </div>
+                <div class="form-group d-flex justify-content-start">
+                    <div class="form-check mr-3">
+                        <input type="checkbox" class="form-check-input" id="checkbox-query">
+                        <label class="form-check-label" for="checkbox-query">Don't query papers</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="checkbox-selected">
+                        <label class="form-check-label" for="checkbox-selected">Only query selected paper</label>
+                    </div>
+                </div>
             </form>
-            <footer>&copy; 2023. <a href="https://smsharma.io/">Siddharth Mishra-Sharma</a>.
+            <footer>
+                &copy; 2023 Siddharth Mishra-Sharma. All rights reserved.
+                <br>
+                <a href="https://smsharma.io/" target="_blank">smsharma.io</a>
             </footer>
         </div>
     </div>
@@ -245,6 +288,7 @@
         const chatBox = document.getElementById('chat-box');
         const queryInput = document.getElementById('query');
         const arxivIdsSuccess = document.getElementById('arxiv-ids-success');
+        const arxivIdsFail = document.getElementById('arxiv-ids-fail');
         const arxivIdsInput = document.getElementById('arxiv-ids');
         const addArxivIdsButton = document.getElementById('add-arxiv-ids');
         const arxivIdsList = document.getElementById('arxiv-ids-list');
@@ -254,6 +298,9 @@
         const togglePdfPaneButton = document.getElementById('toggle-pdf-pane');
         const rightSide = document.querySelector('.right-side');
         const leftSide = document.querySelector('.left-side');
+        const modelDropdown = document.getElementById('dropdown-model');
+        const queryCheckbox = document.getElementById('checkbox-query');
+        const onlyOneCheckbox = document.getElementById('checkbox-selected');
 
         let pdfPaneVisible = true;
 
@@ -289,6 +336,12 @@
                 badge.addEventListener('click', (event) => {
                     const arxivId = event.target.getAttribute('data-arxivid');
                     arxivPdf.src = `https://arxiv.org/pdf/${arxivId}.pdf`;
+
+                    // Remove the 'green' class from all badges
+                    arxivBadges.forEach((badge) => badge.classList.remove('green'));
+
+                    // Add the 'green' class to the clicked badge
+                    event.target.classList.add('green');
                 })
             );
 
@@ -326,7 +379,10 @@
 
                 updateArxivIdsList();
             } else {
-                // You can add some error handling or message here if needed
+                arxivIdsFail.style.display = 'block';
+                setTimeout(() => {
+                    arxivIdsFail.style.display = 'none';
+                }, 3000); // Hide the fail message after 3 seconds
             }
         });
 
@@ -369,11 +425,6 @@
                     copyButton.textContent = 'Copy';
                     copyButton.classList.add('btn', 'btn-sm', 'btn-maroon', 'copy-button');
                     buttonGroup.appendChild(copyButton);
-
-                    // const newButton = document.createElement('button');
-                    // newButton.textContent = 'Paste';
-                    // newButton.classList.add('btn', 'btn-sm', 'btn-maroon', 'paste-button');
-                    // buttonGroup.appendChild(newButton);
                 });
             }
 
@@ -392,11 +443,14 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-
         chatForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             const query = queryInput.value.trim();
             if (!query) return;
+
+            const modelStr = modelDropdown.value;
+            const queryBool = queryCheckbox.checked;
+            const onlyOneBool = onlyOneCheckbox.checked;
 
             addMessage(query, 'user');
             queryInput.value = '';
@@ -404,7 +458,7 @@
             const response = await fetch('/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query }),
+                body: JSON.stringify({ query, modelStr, queryBool }),
             });
 
             const { result, css_classes } = await response.json();

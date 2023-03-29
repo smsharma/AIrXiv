@@ -23,8 +23,14 @@ def semantic_search(query_embedding, embeddings):
 
 
 def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temperature=0.3):
-    system_prompt = "You are a helpful scientific research assistant. You can write equations in LaTeX. You are an expert and helpful programmer and write correct code."
-    prompt = f"Use this context to answer the question at the end. {context}. Fix any unknown LaTeX syntax elements. Do not use the \enumerate or \itemize LaTex environments -- write text bullet points. Question: {query}"
+
+    system_prompt = "You are a helpful scientific research assistant. You can write equations in LaTeX. You can fix any unknown LaTeX syntax elements. Do not use the \enumerate or \itemize LaTex environments -- write text bullet points. You are an expert and helpful programmer and write correct code."
+
+    if context is not None and len(context) > 0:
+        prompt = f"Use this context to answer the question at the end. {context}. Question: {query}"
+    else:
+        prompt = f"Question: {query}"
+
     response = openai.ChatCompletion.create(
         model=model,
         messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
@@ -40,7 +46,7 @@ def get_embedding(text, model="all-MiniLM-L6-v2"):
     return model.encode(text)
 
 
-def run(query):
+def run(query, model="gpt-3.5-turbo", query_papers=True):
 
     text_file = "./data/db/df_text.csv"
     embeddings_file = "./data/db/embeddings.npy"
@@ -53,9 +59,13 @@ def run(query):
             print(f"{file} does not exist")
             is_missing = True
 
+    # Don't query papers; pretend they don't exist
+    if not query_papers:
+        is_missing = True
+
     if not query:
         return "Please enter your question above, and I'll do my best to help you."
-    if len(query) > 250:
+    if len(query) > 300:
         return "Please ask a shorter question!"
     else:
 
@@ -70,11 +80,11 @@ def run(query):
                 for i, row in enumerate(csv_reader):
                     if i in ranked_indices[:n_relevant_chunks]:
                         most_relevant_chunk += " ".join(row)
-                answer = answer_question(most_relevant_chunk, query)
-                # print(most_relevant_chunk)
+
+                answer = answer_question(context=most_relevant_chunk, query=query, model=model)
                 answer.strip("\n")
                 return answer
         else:
-            answer = answer_question("", query)
+            answer = answer_question(context=None, query=query, model=model)
             answer.strip("\n")
             return answer
