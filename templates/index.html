@@ -202,6 +202,10 @@
             background-color: green !important;
             color: white !important;
         }
+
+        #add-code-urls {
+            background-color: #337ab7;
+        }
     </style>
 </head>
 
@@ -224,7 +228,6 @@
                             <button type="button" class="btn btn-maroon" id="add-arxiv-ids">Add</button>
                             <button type="button" class="btn btn-secondary" id="reset-arxiv-ids">Reset</button>
                             <button type="button" class="btn btn-info" id="toggle-pdf-pane">Toggle PDF/Code</button>
-
                         </div>
                     </div>
                     <div id="arxiv-ids-success" class="alert alert-success mt-2" style="display: none;">
@@ -234,6 +237,22 @@
                         Failed to add paper.
                     </div>
                     <div id="arxiv-ids-list" class="mt-2"></div>
+                </div>
+
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="code-urls" placeholder="Enter notebook URL">
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-primary" id="add-code-urls">Add Notebook</button>
+                        </div>
+                    </div>
+                    <div id="code-urls-success" class="alert alert-success mt-2" style="display: none;">
+                        Successfully added code URL.
+                    </div>
+                    <div id="code-urls-fail" class="alert alert-success mt-2" style="display: none;">
+                        Failed to add code URL.
+                    </div>
+                    <div id="code-urls-list" class="mt-2"></div>
                 </div>
             </div>
             <div class="chat-box" id="chat-box"></div>
@@ -278,8 +297,7 @@
     </div>
 
     <div id="jupyter-container" class="right-side" style="display: none;">
-        <webview id="jupyter-lab" src="http://127.0.0.1:8888/lab?token=dcc207b027ae2b99e0b346b814e8752227fdb6b4a14f7346"
-            style="width:100%; height:100%;"></webview>
+        <webview id="jupyter-lab" src="" style="width:100%; height:100%;"></webview>
     </div>
 
 
@@ -291,6 +309,7 @@
         const arxivIdsFail = document.getElementById('arxiv-ids-fail');
         const arxivIdsInput = document.getElementById('arxiv-ids');
         const addArxivIdsButton = document.getElementById('add-arxiv-ids');
+        const addCodeUrl = document.getElementById('add-code-urls');
         const arxivIdsList = document.getElementById('arxiv-ids-list');
         const resetArxivIdsButton = document.getElementById('reset-arxiv-ids');
         const initialArxivIds = JSON.parse('{{ arxiv_ids | tojson | safe }}');
@@ -306,6 +325,15 @@
 
         const pdfContainer = document.getElementById('pdf-container');
         const jupyterContainer = document.getElementById('jupyter-container');
+        const addCodeUrlButton = document.getElementById('add-code-urls');
+        const codeUrlsInput = document.getElementById('code-urls');
+
+        codeUrlsInput.addEventListener('keyup', function (event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                addCodeUrlButton.click();
+            }
+        });
 
         togglePdfPaneButton.addEventListener('click', () => {
             // Toggle the visibility of the PDF pane
@@ -336,11 +364,7 @@
                 badge.addEventListener('click', (event) => {
                     const arxivId = event.target.getAttribute('data-arxivid');
                     arxivPdf.src = `https://arxiv.org/pdf/${arxivId}.pdf`;
-
-                    // Remove the 'green' class from all badges
                     arxivBadges.forEach((badge) => badge.classList.remove('green'));
-
-                    // Add the 'green' class to the clicked badge
                     event.target.classList.add('green');
                 })
             );
@@ -384,6 +408,13 @@
                     arxivIdsFail.style.display = 'none';
                 }, 3000); // Hide the fail message after 3 seconds
             }
+        });
+
+        addCodeUrl.addEventListener('click', async () => {
+
+            const codeWindow = document.getElementById('jupyter-lab');
+
+            codeWindow.src = codeUrlsInput.value.trim();
         });
 
         resetArxivIdsButton.addEventListener('click', async () => {
