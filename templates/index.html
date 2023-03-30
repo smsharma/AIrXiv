@@ -238,7 +238,18 @@
                     </div>
                     <div id="arxiv-ids-list" class="mt-2"></div>
                 </div>
-
+            </div>
+            <div class="chat-box" id="chat-box"></div>
+            <form id="chat-form" class="query-box">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" name="query" id="query" class="form-control">
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-maroon">Ask</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="divider">⚛</div>
                 <div class="form-group">
                     <div class="input-group">
                         <input type="text" class="form-control" id="code-urls" placeholder="Enter notebook URL">
@@ -254,20 +265,7 @@
                     </div>
                     <div id="code-urls-list" class="mt-2"></div>
                 </div>
-            </div>
-            <div class="chat-box" id="chat-box"></div>
-            <form id="chat-form" class="query-box">
                 <div class="form-group">
-                    <div class="input-group">
-                        <input type="text" name="query" id="query" class="form-control">
-                        <div class="input-group-append">
-                            <button type="submit" class="btn btn-maroon">Ask</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="divider">⚛</div>
-                <div class="form-group">
-                    <label for="dropdown-model">Model:</label>
                     <select class="form-control" id="dropdown-model">
                         <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
                         <option value="gpt-4">gpt-4</option>
@@ -302,8 +300,8 @@
 
 
     <script>
-        const chatForm = document.getElementById('chat-form');
         const chatBox = document.getElementById('chat-box');
+        const chatForm = document.getElementById('chat-form');
         const queryInput = document.getElementById('query');
         const arxivIdsSuccess = document.getElementById('arxiv-ids-success');
         const arxivIdsFail = document.getElementById('arxiv-ids-fail');
