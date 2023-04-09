@@ -26,7 +26,7 @@ def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temp
     system_prompt = "You are a helpful scientific research assistant. You can write equations in LaTeX. You can fix any unknown LaTeX syntax elements. Do not use the \enumerate or \itemize LaTex environments -- write text bullet points. You are an expert and helpful programmer and write correct code."
 
     if context is not None and len(context) > 0:
-        prompt = f"Use this context to answer the question at the end. {context}. Question: {query}"
+        prompt = f"Use this context to answer the question at the end. If the context is not relevant to the question, do not use it. {context}. Question: {query}"
     else:
         prompt = f"Question: {query}"
 
@@ -38,11 +38,6 @@ def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temp
         temperature=temperature,
     )
     return response["choices"][0]["message"]["content"]
-
-
-def get_embedding(text, model="all-MiniLM-L6-v2"):
-    model = SentenceTransformer(model, device="cpu")
-    return model.encode(text)
 
 
 def run(query, model="gpt-3.5-turbo", query_papers=True):

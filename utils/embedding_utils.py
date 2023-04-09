@@ -1,12 +1,4 @@
-import pandas as pd
-import numpy as np
-from tqdm import tqdm
-import os
-
-import openai
 from sentence_transformers import SentenceTransformer
-
-# from sentence_transformers import SentenceTransformer
 
 
 def sliding_window(text, window_size, stride):
@@ -18,6 +10,6 @@ def sliding_window(text, window_size, stride):
         window_start += stride
 
 
-def get_embedding(text, model="all-MiniLM-L6-v2"):
+def get_embedding(text, model="multi-qa-mpnet-base-dot-v1"):
     model = SentenceTransformer(model, device="cpu")
     return model.encode(text)
