@@ -172,13 +172,16 @@
         });
 
 
-        function updateArxivIdsList() {
-            arxivIdsList.innerHTML = sessionArxivIds
-                .map(
-                    (id) =>
-                        `<span class="badge badge-secondary mr-1 arxiv-badge" data-arxivid="${id}">${id}</span>`
-                )
-                .join('');
+        async function updateArxivIdsList() {
+
+            const arxivBadgesHTML = [];
+            for (const id of sessionArxivIds) {
+                const title = await fetchPaperTitle(id);
+                arxivBadgesHTML.push(
+                    `<span class="badge badge-secondary mr-1 arxiv-badge" data-arxivid="${id}">${id}: ${title}</span>`
+                );
+            }
+            arxivIdsList.innerHTML = arxivBadgesHTML.join('');
 
             const arxivBadges = document.querySelectorAll('.arxiv-badge');
             const arxivPdf = document.getElementById('arxiv-pdf');
@@ -338,6 +341,16 @@
         });
 
 
+        async function fetchPaperTitle(arxivId) {
+            const url = `http://export.arxiv.org/api/query?id_list=${arxivId}`;
+            const response = await fetch(url);
+            const data = await response.text();
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(data, 'text/xml');
+            const title = xmlDoc.getElementsByTagName('entry')[0].getElementsByTagName('title')[0].textContent;
+
+            return title.trim();
+        }
 
 
     </script>

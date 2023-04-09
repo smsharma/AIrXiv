@@ -174,3 +174,9 @@ footer {
 #add-code-urls {
     background-color: #337ab7;
 }
+
+.paper-title {
+    font-weight: 300;
+    font-size: 0.9em;
+    margin-left: 5px;
+}

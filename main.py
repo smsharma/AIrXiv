@@ -28,7 +28,6 @@ def index():
 
 @app.route("/ask", methods=["POST"])
 def ask():
-
     data = request.get_json()
 
     query = request.json.get("query", "").strip()
@@ -69,7 +68,6 @@ def ask():
 
 @app.route("/add_arxiv_ids", methods=["POST"])
 def add_arxiv_ids():
-
     arxiv_ids = request.json["arxiv_ids"]
 
     pdf_dir = "./data/papers/"
