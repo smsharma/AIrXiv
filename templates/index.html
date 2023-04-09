@@ -301,7 +301,7 @@
             }
         });
 
-        function addMessage(text, sender, cssClasses) {
+        async function addMessage(text, sender, cssClasses) {
             const message = document.createElement('div');
             message.classList.add('message', sender);
             message.innerHTML = text;
@@ -333,10 +333,11 @@
 
             chatBox.appendChild(message);
 
-            MathJax.typeset([message]);
+            await MathJax.typesetPromise([message]);
 
             chatBox.scrollTop = chatBox.scrollHeight;
         }
+
 
         chatForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -363,8 +364,9 @@
 
             chatBox.removeChild(currentLoadingIndicator);
 
-            addMessage(result, 'bot', css_classes);
+            await addMessage(result, 'bot', css_classes);
         });
+
 
         document.addEventListener('click', function (e) {
             if (e.target && e.target.classList.contains('copy-button')) {
