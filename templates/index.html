@@ -55,6 +55,9 @@
                             <button type="button" class="btn btn-info" id="toggle-pdf-pane">Toggle PDF/Code</button>
                         </div>
                     </div>
+                    <div id="arxiv-ids-adding" class="alert alert-info mt-2" style="display: none;">
+                        Adding paper...
+                    </div>
                     <div id="arxiv-ids-success" class="alert alert-success mt-2" style="display: none;">
                         Successfully added paper.
                     </div>
@@ -64,7 +67,11 @@
                     <div id="arxiv-ids-list" class="mt-2"></div>
                 </div>
             </div>
-            <div class="chat-box" id="chat-box"></div>
+            <div class="chat-box" id="chat-box">
+                <div id="loading-indicator" style="display: none;">
+                    <img src="static/energyflowanimation.gif" alt="Thinking..." width="150">
+                </div>
+            </div>
             <form id="chat-form" class="query-box">
                 <div class="form-group">
                     <div class="input-group">
@@ -102,7 +109,7 @@
                         <label class="form-check-label" for="checkbox-query">Don't query papers</label>
                     </div>
                     <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="checkbox-selected">
+                        <input type="checkbox" class="form-check-input" id="checkbox-selected" checked>
                         <label class="form-check-label" for="checkbox-selected">Only query selected paper</label>
                     </div>
                 </div>
@@ -137,6 +144,7 @@
         const resetArxivIdsButton = document.getElementById('reset-arxiv-ids');
         const initialArxivIds = JSON.parse('{{ arxiv_ids | tojson | safe }}');
         let sessionArxivIds = initialArxivIds;
+        let selectedPaperId = null;
         const togglePdfPaneButton = document.getElementById('toggle-pdf-pane');
         const rightSide = document.querySelector('.right-side');
         const leftSide = document.querySelector('.left-side');
@@ -150,6 +158,34 @@
         const jupyterContainer = document.getElementById('jupyter-container');
         const addCodeUrlButton = document.getElementById('add-code-urls');
         const codeUrlsInput = document.getElementById('code-urls');
+        const arxivIdsAdding = document.getElementById('arxiv-ids-adding');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        function scrollToBottom() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function showLoadingIndicator() {
+            loadingIndicator.style.display = 'block';
+        }
+
+        function hideLoadingIndicator() {
+            loadingIndicator.style.display = 'none';
+        }
+
+        function addLoadingIndicator() {
+            // Clone the loading indicator element and remove the id attribute
+            const clonedLoadingIndicator = loadingIndicator.cloneNode(true);
+            clonedLoadingIndicator.removeAttribute('id');
+
+            // Show the cloned loading indicator
+            clonedLoadingIndicator.style.display = 'block';
+
+            // Append the cloned loading indicator to the chat box
+            chatBox.appendChild(clonedLoadingIndicator);
+
+            return clonedLoadingIndicator;
+        }
 
         codeUrlsInput.addEventListener('keyup', function (event) {
             if (event.keyCode === 13) {
@@ -192,6 +228,7 @@
                     arxivPdf.src = `https://arxiv.org/pdf/${arxivId}.pdf`;
                     arxivBadges.forEach((badge) => badge.classList.remove('green'));
                     event.target.classList.add('green');
+                    selectedPaperId = arxivId;
                 })
             );
 
@@ -212,6 +249,7 @@
             if (!arxivIds.length) return;
 
             sessionArxivIds = [...sessionArxivIds, ...arxivIds];
+            arxivIdsAdding.style.display = 'block';
 
             const response = await fetch('/add_arxiv_ids', {
                 method: 'POST',
@@ -222,6 +260,7 @@
             const { status } = await response.json();
             if (status === 'success') {
                 arxivIdsInput.value = '';
+                arxivIdsAdding.style.display = 'none';
                 arxivIdsSuccess.style.display = 'block';
                 setTimeout(() => {
                     arxivIdsSuccess.style.display = 'none';
@@ -229,6 +268,7 @@
 
                 updateArxivIdsList();
             } else {
+                arxivIdsAdding.style.display = 'none';
                 arxivIdsFail.style.display = 'block';
                 setTimeout(() => {
                     arxivIdsFail.style.display = 'none';
@@ -291,10 +331,8 @@
                 message.appendChild(style);
             }
 
-            // Insert the copy button before appending the message to the chatbox
             chatBox.appendChild(message);
 
-            // Update the following line
             MathJax.typeset([message]);
 
             chatBox.scrollTop = chatBox.scrollHeight;
@@ -312,13 +350,19 @@
             addMessage(query, 'user');
             queryInput.value = '';
 
+            const currentLoadingIndicator = addLoadingIndicator();
+            scrollToBottom();
+
             const response = await fetch('/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query, modelStr, queryBool }),
+                body: JSON.stringify({ query, modelStr, queryBool, onlyOneBool, selectedPaperId }),
             });
 
             const { result, css_classes } = await response.json();
+
+            chatBox.removeChild(currentLoadingIndicator);
+
             addMessage(result, 'bot', css_classes);
         });
 

@@ -37,6 +37,8 @@ def ask():
     data = request.get_json()
     model = data["modelStr"]
     dont_query_papers = data["queryBool"]
+    only_query_one = data["onlyOneBool"]
+    selected_paper = data["selectedPaperId"]
 
     result = run(query, model=model, query_papers=not dont_query_papers)
 

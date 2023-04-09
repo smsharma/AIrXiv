@@ -22,8 +22,7 @@ def semantic_search(query_embedding, embeddings):
     return ranked_indices
 
 
-def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temperature=0.3):
-
+def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temperature=0.1):
     system_prompt = "You are a helpful scientific research assistant. You can write equations in LaTeX. You can fix any unknown LaTeX syntax elements. Do not use the \enumerate or \itemize LaTex environments -- write text bullet points. You are an expert and helpful programmer and write correct code."
 
     if context is not None and len(context) > 0:
@@ -47,7 +46,6 @@ def get_embedding(text, model="all-MiniLM-L6-v2"):
 
 
 def run(query, model="gpt-3.5-turbo", query_papers=True):
-
     text_file = "./data/db/df_text.csv"
     embeddings_file = "./data/db/embeddings.npy"
 
@@ -68,7 +66,6 @@ def run(query, model="gpt-3.5-turbo", query_papers=True):
     if len(query) > 300:
         return "Please ask a shorter question!"
     else:
-
         if not is_missing:
             with open("./data/db/df_text.csv") as csv_file:
                 csv_reader = csv.reader(csv_file)
