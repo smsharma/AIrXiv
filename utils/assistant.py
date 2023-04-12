@@ -1,10 +1,17 @@
 import os
+import yaml
+from types import SimpleNamespace
 
 import openai
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
+
+
+with open("config.yml") as f:
+    config = yaml.safe_load(f)
+config = SimpleNamespace(**config)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -16,7 +23,7 @@ def semantic_search(query_embedding, embeddings):
     return ranked_indices
 
 
-def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temperature=0.02):
+def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temperature=config.temperature):
     system_prompt = "You are a truthful and accurate scientific research assistant. You can write equations in LaTeX. You can fix any unknown LaTeX syntax elements. Do not use the \enumerate. \itemize, \cite, \ref LaTex environments. You are an expert and helpful programmer and write correct code. If parts of the context are not relevant to the question, ignore them. Only answer if you are absolutely confident in the answer. Do not make up any facts. Do not make up what acronyms stand for."
 
     if context is not None and len(context) > 0:
@@ -43,7 +50,7 @@ def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temp
         return "An error occurred: {}".format(e)
 
 
-def run(query, model="gpt-3.5-turbo", api_key=None, query_papers=True, k=3, max_len_query=300):
+def run(query, model="gpt-3.5-turbo", api_key=None, query_papers=True, k=config.top_k, max_len_query=300):
     if api_key is None:
         openai.api_key = os.getenv("OPENAI_API_KEY")
     else:

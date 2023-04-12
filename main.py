@@ -1,5 +1,7 @@
 import os
 import shutil
+import yaml
+from types import SimpleNamespace
 
 from flask import Flask, request, render_template, jsonify, Markup
 from pygments import highlight
@@ -13,6 +15,11 @@ from utils.arxiv_utils import download_arxiv_source, split_latex
 from utils.db_utils import update_txt
 
 app = Flask(__name__, template_folder="static")
+
+# Get config
+with open("config.yml") as f:
+    config = yaml.safe_load(f)
+config = SimpleNamespace(**config)
 
 
 @app.route("/")
@@ -88,8 +95,8 @@ def add_arxiv_ids():
 
     texts = [download_arxiv_source(arxiv_id, output_dir="./data/papers/") for arxiv_id in arxiv_ids]
 
-    window_size = 512
-    stride = 384
+    window_size = config.chunk_size
+    stride = config.chunk_stride
 
     texts_metadata = []
     for text, arxiv_id in zip(texts, arxiv_ids):

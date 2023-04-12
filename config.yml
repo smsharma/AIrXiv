@@ -1,0 +1,4 @@
+top_k: 3
+chunk_size: 512
+chunk_stride: 384
+temperature: 0.02
