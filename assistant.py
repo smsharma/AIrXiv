@@ -40,7 +40,7 @@ def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temp
     except openai.error.APIConnectionError as e:
         return "Issue connecting to the OpenAI API."
     except Exception as e:
-        return "An unknown error occurred."
+        return "An error occurred: {}".format(e)
 
 
 def run(query, model="gpt-3.5-turbo", api_key=None, query_papers=True, k=3, max_len_query=300):
