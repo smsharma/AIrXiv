@@ -12,6 +12,60 @@ from tqdm import tqdm
 from langchain.document_loaders import PyPDFLoader
 
 
+def split_latex(latex_source, chunk_size, stride):
+    # Extract the content between \begin{document} and \end{document}
+    document_pattern = re.compile(r"\\begin\{document\}(.*?)\\end\{document\}", re.DOTALL)
+    match = document_pattern.search(latex_source)
+    if not match:
+        return []
+    document_content = match.group(1)
+
+    # Extract sections
+    section_pattern = re.compile(r"\\section\{.*?\}", re.DOTALL)
+    figure_caption_pattern = re.compile(r"\\begin\{figure\}.*?\\caption\{.*?\}.*?\\end\{figure\}", re.DOTALL)
+    table_caption_pattern = re.compile(r"\\begin\{table\}.*?\\caption\{.*?\}.*?\\end\{table\}", re.DOTALL)
+
+    sections = list(section_pattern.finditer(document_content))
+    figure_captions = list(figure_caption_pattern.finditer(document_content))
+    table_captions = list(table_caption_pattern.finditer(document_content))
+
+    def is_inside_caption(pos):
+        for fig_caption in figure_captions:
+            if fig_caption.start() < pos < fig_caption.end():
+                return True
+
+        for table_caption in table_captions:
+            if table_caption.start() < pos < table_caption.end():
+                return True
+
+        return False
+
+    def get_section(pos):
+        if is_inside_caption(pos):
+            return None
+
+        current_section = None
+        for sec in reversed(sections):
+            if sec.start() < pos:
+                current_section = sec.group(0)
+                break
+
+        return current_section if current_section else None
+
+    # Split the content into chunks
+    chunks = []
+    pos = 0
+    while pos < len(document_content):
+        end_pos = min(pos + chunk_size, len(document_content))
+        current_section = get_section(pos)
+
+        chunks.append({"chunk": document_content[pos:end_pos], "section": current_section})
+
+        pos += stride
+
+    return chunks
+
+
 def remove_latex_preamble(latex_source):
     """Remove the LaTeX preamble from a string containing LaTeX source."""
     # Regular expression to match the preamble
