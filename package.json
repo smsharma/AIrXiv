@@ -21,12 +21,12 @@
     "research"
   ],
   "dependencies": {
-    "electron-rebuild": "^3.2.9",
     "electron-reload": "^2.0.0-alpha.1"
   },
   "devDependencies": {
     "concurrently": "^8.0.1",
     "electron": "^23.2.0",
+    "electron-builder": "^23.6.0"
   },
   "author": "Siddharth Mishra-Sharma",
   "license": "MIT",

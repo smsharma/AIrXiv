@@ -128,7 +128,7 @@
     </div>
 
     <div id="jupyter-container" class="right-side" style="display: none;">
-        <webview id="jupyter-lab" src="" style="width:100%; height:100%;"></webview>
+        <webview id="jupyter-lab" src="static/code_default.html" style="width:100%; height:100%;"></webview>
     </div>
 
 
@@ -213,7 +213,11 @@
 
             const arxivBadgesHTML = [];
             for (const id of sessionArxivIds) {
-                const title = await fetchPaperTitle(id);
+                let title = await fetchPaperTitle(id);
+                // Truncate the title if it is too long
+                if (title.length > 80) {
+                    title = title.substring(0, 80) + '...';
+                }
                 arxivBadgesHTML.push(
                     `<span class="badge badge-secondary mr-1 arxiv-badge" data-arxivid="${id}">${id}: ${title}</span>`
                 );
@@ -243,18 +247,6 @@
         window.onload = function () {
             updateArxivIdsList();
         }
-
-        // updateOpenAIKey.addEventListener('click', async () => {
-        //     const openAIKey = openAIKeyInput.value
-
-        //     const response = await fetch('/update_openai_key', {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify({ openai_key: openAIKey }),
-        //     });
-
-        //     const { status } = await response.json();
-        // });
 
         addArxivIdsButton.addEventListener('click', async () => {
             const arxivIds = arxivIdsInput.value.trim().split(',').map(id => id.trim());
