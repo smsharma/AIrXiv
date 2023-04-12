@@ -1,21 +1,18 @@
+import os
+import shutil
+
 from flask import Flask, request, render_template, jsonify, Markup
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
-from assistant import run
-from utils.arxiv_utils import download_arxiv_source, split_latex
-from utils.db_utils import update_dataframe, update_ndarray, update_txt
-from utils.embedding_utils import get_embedding, sliding_window
-from langchain.document_loaders import PyPDFLoader
-import pandas as pd
-import os
-import numpy as np
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
-import shutil
-import bcrypt
 
-app = Flask(__name__)
+from assistant import run
+from utils.arxiv_utils import download_arxiv_source, split_latex
+from utils.db_utils import update_txt
+
+app = Flask(__name__, template_folder="static")
 
 
 @app.route("/")
@@ -73,17 +70,6 @@ def ask():
 
     # Return the formatted result as JSON, including the Pygments CSS classes
     return jsonify({"result": formatted_result, "css_classes": css_classes})
-
-
-# @app.route("/update_openai_key", methods=["POST"])
-# def update_openai_key():
-#     """Route to update OpenAI key in the database."""
-#     openai_key = request.json["openai_key"]
-#     hashed_openai_key = bcrypt.hashpw(openai_key.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-#     with open("./data/db/openai_key_hashed.txt", "w") as f:
-#         f.write(hashed_openai_key)
-#     return jsonify({"status": "success"})
 
 
 @app.route("/add_arxiv_ids", methods=["POST"])

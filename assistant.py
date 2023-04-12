@@ -1,16 +1,12 @@
 import os
-import csv
-
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import openai
-import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
-from utils.embedding_utils import get_embedding
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def semantic_search(query_embedding, embeddings):
@@ -47,7 +43,7 @@ def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temp
         return "An unknown error occurred."
 
 
-def run(query, model="gpt-3.5-turbo", api_key=None, query_papers=True, k=2, max_len_query=300):
+def run(query, model="gpt-3.5-turbo", api_key=None, query_papers=True, k=3, max_len_query=300):
     if api_key is None:
         openai.api_key = os.getenv("OPENAI_API_KEY")
     else:

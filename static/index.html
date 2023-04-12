@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                processRefs: true
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script src="preload.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='pygments.css') }}">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>AIrXiv</title>
+    <style>
+    </style>
+</head>
+
+<body>
+
+
+    <div class="left-side">
+
+        <div class="container">
+            <h2 class="text-center"><code>AIrXiv</code>: The arXiv Research Assistant</h2>
+            <div class="arxiv-id-form">
+                <p>Enter arXiv IDs in the box below to add papers to the database, then use the chat box to interact
+                    with them.
+                    Hit "Reset" to reset the papers database.</p>
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="arxiv-ids"
+                            placeholder="Enter comma-separated arXiv IDs">
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-maroon" id="add-arxiv-ids">Add</button>
+                            <button type="button" class="btn btn-secondary" id="reset-arxiv-ids">Reset</button>
+                            <button type="button" class="btn btn-info" id="toggle-pdf-pane">Toggle PDF/Code</button>
+                        </div>
+                    </div>
+                    <div id="arxiv-ids-adding" class="alert alert-info mt-2" style="display: none;">
+                        Adding paper(s)...
+                    </div>
+                    <div id="arxiv-ids-success" class="alert alert-success mt-2" style="display: none;">
+                        Successfully added paper.
+                    </div>
+                    <div id="arxiv-ids-fail" class="alert alert-success mt-2" style="display: none;">
+                        Failed to add paper.
+                    </div>
+                    <div id="arxiv-ids-list" class="mt-2"></div>
+                </div>
+            </div>
+            <div class="chat-box" id="chat-box">
+                <div id="loading-indicator" style="display: none;">
+                    <img src="static/energyflowanimation.gif" alt="Thinking..." width="150">
+                </div>
+            </div>
+            <form id="chat-form" class="query-box">
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" name="query" id="query" class="form-control">
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-maroon">Ask</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="divider">⚛</div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="api-key" placeholder="Enter OpenAI API Key">
+                    </div>
+                    <div id="api-key-list" class="mt-2"></div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="code-urls" placeholder="Enter notebook URL">
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-primary" id="add-code-urls">Add Notebook</button>
+                        </div>
+                    </div>
+                    <div id="code-urls-success" class="alert alert-success mt-2" style="display: none;">
+                        Successfully added code URL.
+                    </div>
+                    <div id="code-urls-fail" class="alert alert-success mt-2" style="display: none;">
+                        Failed to add code URL.
+                    </div>
+                    <div id="code-urls-list" class="mt-2"></div>
+                </div>
+
+                <div class="form-group">
+                    <select class="form-control" id="dropdown-model">
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        <option value="gpt-4">gpt-4</option>
+                    </select>
+                </div>
+                <div class="form-group d-flex justify-content-start">
+                    <div class="form-check mr-3">
+                        <input type="checkbox" class="form-check-input" id="checkbox-query">
+                        <label class="form-check-label" for="checkbox-query">Don't query papers</label>
+                    </div>
+                </div>
+            </form>
+            <footer>
+                &copy; 2023. MIT License. <a href="https://github.com/smsharma/AIrXiv" target="_blank">Source</a>.
+            </footer>
+        </div>
+    </div>
+
+    <div id="pdf-container" class="right-side">
+        <webview id="arxiv-pdf" src="" style="width:100%; height:100%;"></webview>
+    </div>
+
+    <div id="jupyter-container" class="right-side" style="display: none;">
+        <webview id="jupyter-lab" src="" style="width:100%; height:100%;"></webview>
+    </div>
+
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const chatForm = document.getElementById('chat-form');
+        const queryInput = document.getElementById('query');
+        const arxivIdsSuccess = document.getElementById('arxiv-ids-success');
+        const arxivIdsFail = document.getElementById('arxiv-ids-fail');
+        const arxivIdsInput = document.getElementById('arxiv-ids');
+        const addArxivIdsButton = document.getElementById('add-arxiv-ids');
+        const addCodeUrl = document.getElementById('add-code-urls');
+        const arxivIdsList = document.getElementById('arxiv-ids-list');
+        const resetArxivIdsButton = document.getElementById('reset-arxiv-ids');
+        const initialArxivIds = JSON.parse('{{ arxiv_ids | tojson | safe }}');
+        let sessionArxivIds = initialArxivIds;
+        let selectedPaperId = null;
+        const togglePdfPaneButton = document.getElementById('toggle-pdf-pane');
+        const rightSide = document.querySelector('.right-side');
+        const leftSide = document.querySelector('.left-side');
+        const modelDropdown = document.getElementById('dropdown-model');
+        const queryCheckbox = document.getElementById('checkbox-query');
+        const openAIKeyInput = document.getElementById('api-key');
+
+        let pdfPaneVisible = true;
+
+        const pdfContainer = document.getElementById('pdf-container');
+        const jupyterContainer = document.getElementById('jupyter-container');
+        const addCodeUrlButton = document.getElementById('add-code-urls');
+        const codeUrlsInput = document.getElementById('code-urls');
+        const arxivIdsAdding = document.getElementById('arxiv-ids-adding');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        function scrollToBottom() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function showLoadingIndicator() {
+            loadingIndicator.style.display = 'block';
+        }
+
+        function hideLoadingIndicator() {
+            loadingIndicator.style.display = 'none';
+        }
+
+        function addLoadingIndicator() {
+            // Clone the loading indicator element and remove the id attribute
+            const clonedLoadingIndicator = loadingIndicator.cloneNode(true);
+            clonedLoadingIndicator.removeAttribute('id');
+
+            // Show the cloned loading indicator
+            clonedLoadingIndicator.style.display = 'block';
+
+            // Append the cloned loading indicator to the chat box
+            chatBox.appendChild(clonedLoadingIndicator);
+
+            return clonedLoadingIndicator;
+        }
+
+        codeUrlsInput.addEventListener('keyup', function (event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                addCodeUrlButton.click();
+            }
+        });
+
+        togglePdfPaneButton.addEventListener('click', () => {
+            // Toggle the visibility of the PDF pane
+            if (pdfPaneVisible) {
+                pdfContainer.style.display = 'none';
+                jupyterContainer.style.display = 'block';
+            } else {
+                pdfContainer.style.display = 'block';
+                jupyterContainer.style.display = 'none';
+            }
+            // Update the visibility state
+            pdfPaneVisible = !pdfPaneVisible;
+        });
+
+
+        async function updateArxivIdsList() {
+
+            const arxivBadgesHTML = [];
+            for (const id of sessionArxivIds) {
+                const title = await fetchPaperTitle(id);
+                arxivBadgesHTML.push(
+                    `<span class="badge badge-secondary mr-1 arxiv-badge" data-arxivid="${id}">${id}: ${title}</span>`
+                );
+            }
+            arxivIdsList.innerHTML = arxivBadgesHTML.join('');
+
+            const arxivBadges = document.querySelectorAll('.arxiv-badge');
+            const arxivPdf = document.getElementById('arxiv-pdf');
+
+            arxivBadges.forEach((badge) =>
+                badge.addEventListener('click', (event) => {
+                    const arxivId = event.target.getAttribute('data-arxivid');
+                    arxivPdf.src = `https://arxiv.org/pdf/${arxivId}.pdf`;
+                    arxivBadges.forEach((badge) => badge.classList.remove('green'));
+                    event.target.classList.add('green');
+                    selectedPaperId = arxivId;
+                })
+            );
+
+            if (sessionArxivIds.length > 0) {
+                arxivPdf.src = `https://arxiv.org/pdf/${sessionArxivIds[0]}.pdf`;
+            } else {
+                arxivPdf.src = '';
+            }
+        }
+
+        window.onload = function () {
+            updateArxivIdsList();
+        }
+
+        // updateOpenAIKey.addEventListener('click', async () => {
+        //     const openAIKey = openAIKeyInput.value
+
+        //     const response = await fetch('/update_openai_key', {
+        //         method: 'POST',
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify({ openai_key: openAIKey }),
+        //     });
+
+        //     const { status } = await response.json();
+        // });
+
+        addArxivIdsButton.addEventListener('click', async () => {
+            const arxivIds = arxivIdsInput.value.trim().split(',').map(id => id.trim());
+
+            if (!arxivIds.length) return;
+
+            sessionArxivIds = [...sessionArxivIds, ...arxivIds];
+            arxivIdsAdding.style.display = 'block';
+
+            const response = await fetch('/add_arxiv_ids', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ arxiv_ids: sessionArxivIds }),
+            });
+
+            const { status } = await response.json();
+            if (status === 'success') {
+                arxivIdsInput.value = '';
+                arxivIdsAdding.style.display = 'none';
+                arxivIdsSuccess.style.display = 'block';
+                setTimeout(() => {
+                    arxivIdsSuccess.style.display = 'none';
+                }, 3000); // Hide the success message after 3 seconds
+
+                updateArxivIdsList();
+            } else {
+                arxivIdsAdding.style.display = 'none';
+                arxivIdsFail.style.display = 'block';
+                setTimeout(() => {
+                    arxivIdsFail.style.display = 'none';
+                }, 3000); // Hide the fail message after 3 seconds
+            }
+        });
+
+        addCodeUrl.addEventListener('click', async () => {
+
+            const codeWindow = document.getElementById('jupyter-lab');
+
+            codeWindow.src = codeUrlsInput.value.trim();
+        });
+
+        resetArxivIdsButton.addEventListener('click', async () => {
+            sessionArxivIds = [];
+            updateArxivIdsList();
+
+            const response = await fetch('/reset_arxiv_ids', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+
+            const { status } = await response.json();
+            if (status === 'success') {
+                updateArxivIdsList(sessionArxivIds);
+            } else {
+                // You can add some error handling or message here if needed
+            }
+        });
+
+        async function addMessage(text, sender, cssClasses) {
+            const message = document.createElement('div');
+            message.classList.add('message', sender);
+            message.innerHTML = text;
+
+            if (sender === 'bot') {
+                const codeBlocks = message.querySelectorAll('.highlight pre');
+                codeBlocks.forEach((codeBlock) => {
+                    const codeContainer = document.createElement('div');
+                    codeContainer.classList.add('code-container');
+                    codeBlock.parentNode.insertBefore(codeContainer, codeBlock);
+                    codeContainer.appendChild(codeBlock);
+
+                    const buttonGroup = document.createElement('div');
+                    buttonGroup.classList.add('input-group-append');
+                    codeContainer.appendChild(buttonGroup);
+
+                    const copyButton = document.createElement('button');
+                    copyButton.textContent = 'Copy';
+                    copyButton.classList.add('btn', 'btn-sm', 'btn-maroon', 'copy-button');
+                    buttonGroup.appendChild(copyButton);
+                });
+            }
+
+            if (sender === 'bot') {
+                const style = document.createElement('style');
+                style.innerHTML = cssClasses;
+                message.appendChild(style);
+            }
+
+            chatBox.appendChild(message);
+
+            await MathJax.typesetPromise([message]);
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+
+        chatForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const query = queryInput.value.trim();
+            if (!query) return;
+
+            const modelStr = modelDropdown.value;
+            const queryBool = queryCheckbox.checked;
+            const openAIKey = openAIKeyInput.value
+
+            addMessage(query, 'user');
+            queryInput.value = '';
+
+            const currentLoadingIndicator = addLoadingIndicator();
+            scrollToBottom();
+
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query, modelStr, queryBool, selectedPaperId, openAIKey }),
+            });
+
+            const { result, css_classes } = await response.json();
+
+            chatBox.removeChild(currentLoadingIndicator);
+
+            await addMessage(result, 'bot', css_classes);
+        });
+
+
+        document.addEventListener('click', function (e) {
+            if (e.target && e.target.classList.contains('copy-button')) {
+                const codeBlock = e.target.parentNode.parentNode.querySelector('pre');
+                const button = e.target;
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(function () {
+                    button.textContent = originalText;
+                }, 1000);
+                const textarea = document.createElement('textarea');
+                textarea.textContent = codeBlock.textContent;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+        });
+
+
+        async function fetchPaperTitle(arxivId) {
+            const url = `http://export.arxiv.org/api/query?id_list=${arxivId}`;
+            const response = await fetch(url);
+            const data = await response.text();
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(data, 'text/xml');
+            const title = xmlDoc.getElementsByTagName('entry')[0].getElementsByTagName('title')[0].textContent;
+
+            return title.trim();
+        }
+
+
+    </script>
+</body>
+
+</html>
