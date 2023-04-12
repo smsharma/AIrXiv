@@ -13,12 +13,14 @@ import numpy as np
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 import shutil
+import bcrypt
 
 app = Flask(__name__)
 
 
 @app.route("/")
 def index():
+    """Render page with existing arXiv IDs in database."""
     arxiv_ids = []
     file_path = "./data/db/arxiv_ids.txt"
 
@@ -31,6 +33,7 @@ def index():
 
 @app.route("/ask", methods=["POST"])
 def ask():
+    """Route to handle queries from the frontend."""
     data = request.get_json()
 
     query = request.json.get("query", "").strip()
@@ -41,8 +44,10 @@ def ask():
     model = data["modelStr"]
     dont_query_papers = data["queryBool"]
     selected_paper = data["selectedPaperId"]
+    openai_api_key = data["openAIKey"]
 
-    result = run(query, model=model, query_papers=not dont_query_papers)
+    # Do error handling here
+    result = run(query, model=model, query_papers=not dont_query_papers, api_key=openai_api_key)
 
     sections = result.split("```")
     formatted_result = []
@@ -70,8 +75,20 @@ def ask():
     return jsonify({"result": formatted_result, "css_classes": css_classes})
 
 
+# @app.route("/update_openai_key", methods=["POST"])
+# def update_openai_key():
+#     """Route to update OpenAI key in the database."""
+#     openai_key = request.json["openai_key"]
+#     hashed_openai_key = bcrypt.hashpw(openai_key.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+#     with open("./data/db/openai_key_hashed.txt", "w") as f:
+#         f.write(hashed_openai_key)
+#     return jsonify({"status": "success"})
+
+
 @app.route("/add_arxiv_ids", methods=["POST"])
 def add_arxiv_ids():
+    """Route to add arXiv IDs to the database."""
     arxiv_ids = request.json["arxiv_ids"]
 
     pdf_dir = "./data/papers/"
@@ -122,7 +139,7 @@ def add_arxiv_ids():
 
 @app.route("/reset_arxiv_ids", methods=["POST"])
 def reset_arxiv_ids():
-    """Clear entire database"""
+    """Route to clear entire database."""
 
     db_dir = "./data/"
     for filename in os.listdir(db_dir):

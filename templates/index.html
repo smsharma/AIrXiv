@@ -84,6 +84,12 @@
                 <div class="divider">⚛</div>
                 <div class="form-group">
                     <div class="input-group">
+                        <input type="password" class="form-control" id="api-key" placeholder="Enter OpenAI API Key">
+                    </div>
+                    <div id="api-key-list" class="mt-2"></div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
                         <input type="text" class="form-control" id="code-urls" placeholder="Enter notebook URL">
                         <div class="input-group-append">
                             <button type="button" class="btn btn-primary" id="add-code-urls">Add Notebook</button>
@@ -97,6 +103,7 @@
                     </div>
                     <div id="code-urls-list" class="mt-2"></div>
                 </div>
+
                 <div class="form-group">
                     <select class="form-control" id="dropdown-model">
                         <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
@@ -111,8 +118,9 @@
                 </div>
             </form>
             <footer>
-                &copy; 2023 <a href="https://smsharma.io/" target="_blank">Siddharth Mishra-Sharma</a>. Licensed under
-                the MIT License.
+                &copy; 2023.
+                Licensed under
+                the MIT License. <a href="https://github.com/smsharma/AIrXiv" target="_blank">Source</a>.
             </footer>
         </div>
     </div>
@@ -145,6 +153,7 @@
         const leftSide = document.querySelector('.left-side');
         const modelDropdown = document.getElementById('dropdown-model');
         const queryCheckbox = document.getElementById('checkbox-query');
+        const openAIKeyInput = document.getElementById('api-key');
 
         let pdfPaneVisible = true;
 
@@ -236,6 +245,18 @@
         window.onload = function () {
             updateArxivIdsList();
         }
+
+        // updateOpenAIKey.addEventListener('click', async () => {
+        //     const openAIKey = openAIKeyInput.value
+
+        //     const response = await fetch('/update_openai_key', {
+        //         method: 'POST',
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify({ openai_key: openAIKey }),
+        //     });
+
+        //     const { status } = await response.json();
+        // });
 
         addArxivIdsButton.addEventListener('click', async () => {
             const arxivIds = arxivIdsInput.value.trim().split(',').map(id => id.trim());
@@ -340,6 +361,7 @@
 
             const modelStr = modelDropdown.value;
             const queryBool = queryCheckbox.checked;
+            const openAIKey = openAIKeyInput.value
 
             addMessage(query, 'user');
             queryInput.value = '';
@@ -350,7 +372,7 @@
             const response = await fetch('/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query, modelStr, queryBool, selectedPaperId }),
+                body: JSON.stringify({ query, modelStr, queryBool, selectedPaperId, openAIKey }),
             });
 
             const { result, css_classes } = await response.json();

@@ -4,16 +4,14 @@ import tarfile
 import zipfile
 import requests
 import fnmatch
-import subprocess
 import re
 
-import pandas as pd
-from tqdm import tqdm
 from langchain.document_loaders import PyPDFLoader
 
 
 def split_latex(latex_source, chunk_size, stride):
     """Split a LaTeX source into chunks of words of a given size, with given stride."""
+
     # Extract the content between \begin{document} and \end{document}
     document_pattern = re.compile(r"\\begin\{document\}(.*?)\\end\{document\}", re.DOTALL)
     match = document_pattern.search(latex_source)
@@ -78,17 +76,6 @@ def remove_latex_preamble(latex_source):
     cleaned_latex_source = preamble_pattern.sub("", latex_source)
 
     return cleaned_latex_source
-
-
-def extract_arxiv_ids(papers):
-    """Extract the arXiv IDs from the Inspire-HEP papers."""
-    arxiv_ids = []
-    for paper in papers:
-        arxiv_eprints = paper["metadata"].get("arxiv_eprints", [])
-        if arxiv_eprints:
-            arxiv_id = arxiv_eprints[0]["value"]
-            arxiv_ids.append(arxiv_id)
-    return arxiv_ids
 
 
 def download_arxiv_pdf(arxiv_id, output_dir="../data/papers"):
