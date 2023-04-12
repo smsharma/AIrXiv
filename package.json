@@ -5,7 +5,9 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "start-flask": "python main.py",
+    "dev": "concurrently \"npm run start-flask\" \"sleep 2 && npm run start\""
   },
   "repository": {
     "type": "git",
@@ -23,7 +25,8 @@
     "electron-reload": "^2.0.0-alpha.1"
   },
   "devDependencies": {
-    "electron": "^23.2.0"
+    "concurrently": "^8.0.1",
+    "electron": "^23.2.0",
   },
   "author": "Siddharth Mishra-Sharma",
   "license": "MIT",
