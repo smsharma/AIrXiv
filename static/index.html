@@ -35,10 +35,7 @@
 </head>
 
 <body>
-
-
     <div class="left-side">
-
         <div class="container">
             <h2 class="text-center"><code>AIrXiv</code>: The arXiv Research Assistant</h2>
             <div class="arxiv-id-form">
@@ -144,17 +141,12 @@
         const arxivIdsList = document.getElementById('arxiv-ids-list');
         const resetArxivIdsButton = document.getElementById('reset-arxiv-ids');
         const initialArxivIds = JSON.parse('{{ arxiv_ids | tojson | safe }}');
-        let sessionArxivIds = initialArxivIds;
-        let selectedPaperId = null;
         const togglePdfPaneButton = document.getElementById('toggle-pdf-pane');
         const rightSide = document.querySelector('.right-side');
         const leftSide = document.querySelector('.left-side');
         const modelDropdown = document.getElementById('dropdown-model');
         const queryCheckbox = document.getElementById('checkbox-query');
         const openAIKeyInput = document.getElementById('api-key');
-
-        let pdfPaneVisible = true;
-
         const pdfContainer = document.getElementById('pdf-container');
         const jupyterContainer = document.getElementById('jupyter-container');
         const addCodeUrlButton = document.getElementById('add-code-urls');
@@ -162,6 +154,11 @@
         const arxivIdsAdding = document.getElementById('arxiv-ids-adding');
         const loadingIndicator = document.getElementById('loading-indicator');
 
+        let sessionArxivIds = initialArxivIds;
+        let selectedPaperId = null;
+        let pdfPaneVisible = true;
+
+        // Functions for the loading indicator
         function scrollToBottom() {
             chatBox.scrollTop = chatBox.scrollHeight;
         }
@@ -175,19 +172,14 @@
         }
 
         function addLoadingIndicator() {
-            // Clone the loading indicator element and remove the id attribute
-            const clonedLoadingIndicator = loadingIndicator.cloneNode(true);
+            const clonedLoadingIndicator = loadingIndicator.cloneNode(true);  // Clone the loading indicator element and remove the id attribute
             clonedLoadingIndicator.removeAttribute('id');
-
-            // Show the cloned loading indicator
-            clonedLoadingIndicator.style.display = 'block';
-
-            // Append the cloned loading indicator to the chat box
-            chatBox.appendChild(clonedLoadingIndicator);
-
+            clonedLoadingIndicator.style.display = 'block'; // Show the cloned loading indicator
+            chatBox.appendChild(clonedLoadingIndicator); // Append the cloned loading indicator to the chat box
             return clonedLoadingIndicator;
         }
 
+        // Listen for return key press on the query input
         codeUrlsInput.addEventListener('keyup', function (event) {
             if (event.keyCode === 13) {
                 event.preventDefault();
@@ -195,6 +187,7 @@
             }
         });
 
+        // Listen for return key press on the arXiv ID input
         arxivIdsInput.addEventListener('keyup', function (event) {
             if (event.keyCode === 13) {
                 event.preventDefault();
@@ -202,8 +195,9 @@
             }
         });
 
+        // Toggle the visibility of the PDF and code panes
         togglePdfPaneButton.addEventListener('click', () => {
-            // Toggle the visibility of the PDF pane
+
             if (pdfPaneVisible) {
                 pdfContainer.style.display = 'none';
                 jupyterContainer.style.display = 'block';
@@ -211,16 +205,17 @@
                 pdfContainer.style.display = 'block';
                 jupyterContainer.style.display = 'none';
             }
-            // Update the visibility state
-            pdfPaneVisible = !pdfPaneVisible;
+
+            pdfPaneVisible = !pdfPaneVisible;  // Update the visibility state
         });
 
-
+        // Update list of arXiv IDs and buttons
         async function updateArxivIdsList() {
 
             const arxivBadgesHTML = [];
             for (const id of sessionArxivIds) {
                 let title = await fetchPaperTitle(id);
+
                 // Truncate the title if it is too long
                 if (title.length > 80) {
                     title = title.substring(0, 80) + '...';
@@ -255,6 +250,7 @@
             updateArxivIdsList();
         }
 
+        // Add the arxiv ids to the session
         addArxivIdsButton.addEventListener('click', async () => {
             const arxivIds = arxivIdsInput.value.trim().split(',').map(id => id.trim());
 
@@ -295,6 +291,7 @@
             codeWindow.src = codeUrlsInput.value.trim();
         });
 
+        // Reset DB; delete papers and index
         resetArxivIdsButton.addEventListener('click', async () => {
             sessionArxivIds = [];
             updateArxivIdsList();
@@ -309,10 +306,11 @@
             if (status === 'success') {
                 updateArxivIdsList(sessionArxivIds);
             } else {
-                // You can add some error handling or message here if needed
+                // TODO: Add some error handling
             }
         });
 
+        // Function that adds messages to the chat box
         async function addMessage(text, sender, cssClasses) {
             const message = document.createElement('div');
             message.classList.add('message', sender);
@@ -350,7 +348,7 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-
+        // Function that executes actions when the user submits a query
         chatForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             const query = queryInput.value.trim();
@@ -379,7 +377,7 @@
             await addMessage(result, 'bot', css_classes);
         });
 
-
+        // Copy button
         document.addEventListener('click', function (e) {
             if (e.target && e.target.classList.contains('copy-button')) {
                 const codeBlock = e.target.parentNode.parentNode.querySelector('pre');
@@ -398,7 +396,7 @@
             }
         });
 
-
+        // Get title of paper to append to button
         async function fetchPaperTitle(arxivId) {
             const url = `http://export.arxiv.org/api/query?id_list=${arxivId}`;
             const response = await fetch(url);
