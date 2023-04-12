@@ -3,13 +3,16 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
 from assistant import run
-from utils.arxiv_utils import download_arxiv_source
+from utils.arxiv_utils import download_arxiv_source, split_latex
 from utils.db_utils import update_dataframe, update_ndarray, update_txt
 from utils.embedding_utils import get_embedding, sliding_window
 from langchain.document_loaders import PyPDFLoader
 import pandas as pd
 import os
 import numpy as np
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.vectorstores import FAISS
+import shutil
 
 app = Flask(__name__)
 
@@ -37,7 +40,6 @@ def ask():
     data = request.get_json()
     model = data["modelStr"]
     dont_query_papers = data["queryBool"]
-    only_query_one = data["onlyOneBool"]
     selected_paper = data["selectedPaperId"]
 
     result = run(query, model=model, query_papers=not dont_query_papers)
@@ -74,45 +76,42 @@ def add_arxiv_ids():
 
     pdf_dir = "./data/papers/"
     db_dir = "./data/db/"
+    faiss_db_dir = "./data/db/faiss_index"
 
     try:
         os.makedirs(pdf_dir)
     except FileExistsError:
         pass
 
-    # TODO: Check for success
     texts = [download_arxiv_source(arxiv_id, output_dir="./data/papers/") for arxiv_id in arxiv_ids]
 
     window_size = 512
     stride = 384
 
-    text_chunks = []
-    embeddings = []
-
-    for text in texts:
+    texts_metadata = []
+    for text, arxiv_id in zip(texts, arxiv_ids):
         text = text.replace("\n", " ").strip()
-        text_chunks_i = list(sliding_window(text, window_size, stride))
-        embeddings_i = [get_embedding(text) for text in text_chunks_i]
+        texts_metadata_temp = split_latex(text, window_size, stride)
+        for i in range(len(texts_metadata_temp)):
+            texts_metadata_temp[i]["arxiv_id"] = arxiv_id
+        texts_metadata += texts_metadata_temp
 
-        text_chunks += text_chunks_i
-        embeddings += embeddings_i
+    texts = [txt["chunk"] for txt in texts_metadata]
+    metadatas = [dict((key, d[key]) for key in ["section", "arxiv_id"]) for d in texts_metadata]
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/multi-qa-mpnet-base-dot-v1")
 
-    embeddings = np.array(embeddings)
+    # Check if FAISS db folder exists, in which case add to the db. Otherwise, create a new db.
+    if os.path.exists(faiss_db_dir):
+        db = FAISS.load_local(faiss_db_dir, embeddings)
+        db.add_texts(texts, metadatas)
 
-    data = [text_chunks]
-    transposed_data = list(map(list, zip(*data)))
+    else:
+        db = FAISS.from_texts(texts, embeddings, metadatas)
 
-    columns = ["text"]
-    df = pd.DataFrame(transposed_data, columns=columns)
+    # Save the FAISS db
+    db.save_local("./data/db/faiss_index")
 
-    # Update db (text, embeddings, ids) if already exists; save
-
-    df = update_dataframe("{}/df_text.csv".format(db_dir), df)
-    df.to_csv("{}/df_text.csv".format(db_dir), index=False)
-
-    embeddings = update_ndarray("{}/embeddings.npy".format(db_dir), embeddings)
-    np.save("{}/embeddings.npy".format(db_dir), embeddings)
-
+    # Update list of arXiv IDs in db
     arxiv_ids = update_txt("{}/arxiv_ids.txt".format(db_dir), arxiv_ids)
     with open("{}/arxiv_ids.txt".format(db_dir), "w") as f:
         for line in arxiv_ids:
@@ -123,14 +122,16 @@ def add_arxiv_ids():
 
 @app.route("/reset_arxiv_ids", methods=["POST"])
 def reset_arxiv_ids():
-    # Perform your actions to reset the arXiv IDs here, e.g., clear them from a database or a session variable
+    """Clear entire database"""
 
-    db_dir = "./data/db/"
+    db_dir = "./data/"
     for filename in os.listdir(db_dir):
         file_path = os.path.join(db_dir, filename)
         try:
             if os.path.isfile(file_path):
                 os.remove(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
         except Exception as e:
             print(f"Error deleting file: {file_path} - {e}")
 

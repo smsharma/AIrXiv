@@ -13,6 +13,7 @@ from langchain.document_loaders import PyPDFLoader
 
 
 def split_latex(latex_source, chunk_size, stride):
+    """Split a LaTeX source into chunks of words of a given size, with given stride."""
     # Extract the content between \begin{document} and \end{document}
     document_pattern = re.compile(r"\\begin\{document\}(.*?)\\end\{document\}", re.DOTALL)
     match = document_pattern.search(latex_source)
@@ -52,14 +53,16 @@ def split_latex(latex_source, chunk_size, stride):
 
         return current_section if current_section else None
 
-    # Split the content into chunks
+    # Split the content into chunks by word count
+    words = document_content.split()
     chunks = []
     pos = 0
-    while pos < len(document_content):
-        end_pos = min(pos + chunk_size, len(document_content))
-        current_section = get_section(pos)
+    while pos < len(words):
+        end_pos = min(pos + chunk_size, len(words))
+        current_chunk = " ".join(words[pos:end_pos])
+        current_section = get_section(document_content.find(current_chunk))
 
-        chunks.append({"chunk": document_content[pos:end_pos], "section": current_section})
+        chunks.append({"chunk": current_chunk, "section": current_section})
 
         pos += stride
 

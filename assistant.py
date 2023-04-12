@@ -9,8 +9,8 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sentence_transformers import SentenceTransformer
 from utils.embedding_utils import get_embedding
-
-n_relevant_chunks = 2
+from langchain.vectorstores import FAISS
+from langchain.embeddings import HuggingFaceEmbeddings
 
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -22,11 +22,11 @@ def semantic_search(query_embedding, embeddings):
     return ranked_indices
 
 
-def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temperature=0.1):
-    system_prompt = "You are a helpful scientific research assistant. You can write equations in LaTeX. You can fix any unknown LaTeX syntax elements. Do not use the \enumerate or \itemize LaTex environments -- write text bullet points. You are an expert and helpful programmer and write correct code."
+def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temperature=0.02):
+    system_prompt = "You are a truthful and accurate scientific research assistant. You can write equations in LaTeX. You can fix any unknown LaTeX syntax elements. Do not use the \enumerate. \itemize, \cite, \ref LaTex environments. You are an expert and helpful programmer and write correct code. If parts of the context are not relevant to the question, ignore them. Only answer if you are absolutely confident in the answer. Do not make up any facts. Do not make up what acronyms stand for."
 
     if context is not None and len(context) > 0:
-        prompt = f"Use this context to answer the question at the end. If the context is not relevant to the question, do not use it. {context}. Question: {query}"
+        prompt = f"Use the following context to answer the question at the end. Context: {context}. Question: {query}"
     else:
         prompt = f"Question: {query}"
 
@@ -41,10 +41,11 @@ def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temp
 
 
 def run(query, model="gpt-3.5-turbo", query_papers=True):
-    text_file = "./data/db/df_text.csv"
-    embeddings_file = "./data/db/embeddings.npy"
+    db_path = "./data/db/faiss_index"
 
-    files = [text_file, embeddings_file]
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/multi-qa-mpnet-base-dot-v1")
+
+    files = [db_path]
     is_missing = False
 
     for file in files:
@@ -52,7 +53,10 @@ def run(query, model="gpt-3.5-turbo", query_papers=True):
             print(f"{file} does not exist")
             is_missing = True
 
-    # Don't query papers; pretend they don't exist
+    # Load FAISS index
+    db = FAISS.load_local(db_path, embeddings)
+
+    # If set, don't query papers; pretend they don't exist
     if not query_papers:
         is_missing = True
 
@@ -61,21 +65,13 @@ def run(query, model="gpt-3.5-turbo", query_papers=True):
     if len(query) > 300:
         return "Please ask a shorter question!"
     else:
+        # Do a similarity query, combine the most relevant chunks, and answer the question
         if not is_missing:
-            with open("./data/db/df_text.csv") as csv_file:
-                csv_reader = csv.reader(csv_file)
-                embeddings = np.load("./data/db/embeddings.npy")
-
-                query_embedding = get_embedding(query)
-                ranked_indices = semantic_search(np.array(query_embedding), embeddings)
-                most_relevant_chunk = ""
-                for i, row in enumerate(csv_reader):
-                    if i in ranked_indices[:n_relevant_chunks]:
-                        most_relevant_chunk += " ".join(row)
-
-                answer = answer_question(context=most_relevant_chunk, query=query, model=model)
-                answer.strip("\n")
-                return answer
+            similarity_results = db.similarity_search(query, k=2)
+            most_relevant_chunk = ". ".join([results.page_content for results in similarity_results])
+            answer = answer_question(context=most_relevant_chunk, query=query, model=model)
+            answer.strip("\n")
+            return answer
         else:
             answer = answer_question(context=None, query=query, model=model)
             answer.strip("\n")
