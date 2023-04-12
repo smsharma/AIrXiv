@@ -4,6 +4,8 @@ AIrXiv is a prototype for an LLM-powered ArXiv research assistant. It is an Elec
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
 
+![Screenshot.](static/screenshot.png)
+
 ## Installation
 
 0. (Prerequisites) Make sure you have [Node.js](https://nodejs.org/en/download) and Python >=3.7.
