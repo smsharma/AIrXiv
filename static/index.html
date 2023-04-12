@@ -195,6 +195,13 @@
             }
         });
 
+        arxivIdsInput.addEventListener('keyup', function (event) {
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                addArxivIdsButton.click();
+            }
+        });
+
         togglePdfPaneButton.addEventListener('click', () => {
             // Toggle the visibility of the PDF pane
             if (pdfPaneVisible) {

@@ -8,7 +8,7 @@ from pygments.formatters import HtmlFormatter
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 
-from assistant import run
+from utils.assistant import run
 from utils.arxiv_utils import download_arxiv_source, split_latex
 from utils.db_utils import update_txt
 
