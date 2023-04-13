@@ -54,6 +54,7 @@ which launches the Python/Flask backend (`python main.py`) as well as the fronte
 Usage notes:
 - Either `gpt-3.5-turbo` or `gpt-4` can be selected in the app settings. `gpt-4` is significantly better in particular at implementing code, but is about an order of magnitude more expensive (~$0.02/1000 tokens) compared `gpt-3.5-turbo`, and additionally API access is subject to a [waitlist](https://openai.com/waitlist/gpt-4-api).
 - Paper querying can be turned off by checking "Don't query papers" in the settings. This then simply relies on the general capabilities of the model.
+- **The models can hallucinate, and all output should be verified for integrity.**
 
 ## License
 
