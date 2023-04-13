@@ -12,9 +12,8 @@ AIrXiv is a prototype for an LLM-powered ArXiv research assistant. It is an Elec
 
 ![Screenshot.](static/screenshot.png)
 
-## Contents
+## Contents<!-- omit from toc -->
 
-- [Contents](#contents)
 - [Implementation Notes](#implementation-notes)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -23,7 +22,7 @@ AIrXiv is a prototype for an LLM-powered ArXiv research assistant. It is an Elec
 ## Implementation Notes
 
 - AIrXiv attempts to extract the TeX source of the papers when they are added to the database. This was found to work better when it comes to transcribing equations and algorithms compared to extracting directly from the PDF. If this fails, PDF extraction is used.
-- AIrXiv uses a simple top-k similarity search from a FAISS vector store, relying on `langchain`. k can be set in config.yml, along with the chunk size and stride length of  chunks.
+- AIrXiv uses a simple top-k similarity search (k = 3 by default) from a FAISS vector store, relying on `langchain`. k can be set in config.yml, along with the chunk size and stride length of chunks (512 and 384 by default).
 - Frontend elements are in `static`, and backend elements are in `util` and `main.py`.
 
 ## Installation
