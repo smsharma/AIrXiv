@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
     "start-flask": "python main.py",
-    "dev": "concurrently \"npm run start-flask\" \"sleep 2 && npm run start\""
+    "dev": "concurrently \"npm run start-flask\" \"sleep 4 && npm run start\""
   },
   "repository": {
     "type": "git",
