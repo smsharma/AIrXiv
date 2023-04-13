@@ -67,8 +67,8 @@ dependencies:
   - libevent=2.1.10
   - libexpat=2.5.0
   - libffi=3.4.2
-  - libgfortran=5.0.0
-  - libgfortran5=12.2.0
+  # - libgfortran=5.0.0
+  # - libgfortran5=12.2.0
   - libgoogle-cloud=2.8.0
   - libgrpc=1.52.1
   - liblapack=3.9.0
