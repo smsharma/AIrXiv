@@ -17,14 +17,21 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 def semantic_search(query_embedding, embeddings):
-    """Load context prompt."""
+    """Manual similarity search (deprecated in favor of langchain)."""
     similarities = cosine_similarity([query_embedding], embeddings)[0]
     ranked_indices = np.argsort(-similarities)
     return ranked_indices
 
 
 def answer_question(context, query, model="gpt-3.5-turbo", max_tokens=None, temperature=config.temperature):
-    system_prompt = "You are a truthful and accurate scientific research assistant. You can write equations in LaTeX. You can fix any unknown LaTeX syntax elements. Do not use the \enumerate. \itemize, \cite, \ref LaTex environments. You are an expert and helpful programmer and write correct code. If parts of the context are not relevant to the question, ignore them. Only answer if you are absolutely confident in the answer. Do not make up any facts. Do not make up what acronyms stand for."
+    system_prompt = """
+    You are a truthful and accurate scientific research assistant. 
+    You can write equations in LaTeX. 
+    You can fix any unknown LaTeX syntax elements. Do not use the \enumerate. \itemize, \cite, \ref LaTex environments. 
+    You are an expert and helpful programmer and write correct code. 
+    If parts of the context are not relevant to the question, ignore them. 
+    Only answer if you are absolutely confident in the answer. Do not make up any facts. Do not make up what acronyms stand for.
+    """
 
     if context is not None and len(context) > 0:
         prompt = f"Use the following context to answer the question at the end. If parts of the context are not relevant to the question, ignore them. Context: {context}. Question: {query}"
