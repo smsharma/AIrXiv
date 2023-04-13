@@ -51,7 +51,7 @@ Run the Electron app with
 ```
 npm run dev
 ```
-which launches the Python/Flask backend (`python main.py`) as well as the frontend (`npm start`). Add an arXiv ID or two, enter your [OpenAI API Key](https://platform.openai.com/account/api-keys) in the text box towards the bottom, and start asking questions!
+which launches the Python/Flask backend (`python main.py` or `npm run start-flask`) as well as the frontend (`npm start`). If this fails, try running the two commands separately. Add an arXiv ID or two, enter your [OpenAI API Key](https://platform.openai.com/account/api-keys) in the text box towards the bottom, and start asking questions!
 
 Usage notes:
 - Either `gpt-3.5-turbo` or `gpt-4` can be selected in the app settings. `gpt-4` is significantly better in particular at implementing code, but is about an order of magnitude more expensive (~$0.02/1000 tokens) compared `gpt-3.5-turbo`, and additionally API access is subject to a [waitlist](https://openai.com/waitlist/gpt-4-api).
