@@ -1,21 +1,21 @@
 <h1 align="center">
-# AIrXiv
+AIrXiv<!-- omit from toc -->
 </h1>
 
 <h4 align="center">
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
-[![Pull requests welcome](https://img.shields.io/badge/Pull%20Requests-welcome-green.svg?logo=github)](https://github.com/smsharma/AIrXiv/pulls)
+[![Pull requests welcome](https://img.shields.io/badge/Pull%20Requests-welcome-green.svg?logo=github)](https://github.com/smsharma/AIrXiv)
 </h4>
 
 AIrXiv is a prototype for an LLM-powered ArXiv research assistant. It is an Electron-powered app with a Flask backend and uses the OpenAI API. 
 
 ![Screenshot.](static/screenshot.png)
 
-- [AIrXiv](#airxiv)
-  - [Implementation Notes](#implementation-notes)
-  - [Installation](#installation)
-  - [Usage](#usage)
-  - [License](#license)
+- [Implementation Notes](#implementation-notes)
+- [Installation](#installation)
+- [Usage](#usage)
+- [License](#license)
 
 ## Implementation Notes
 
