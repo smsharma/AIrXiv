@@ -5,7 +5,7 @@ AIrXiv<!-- omit from toc -->
 <h4 align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](https://opensource.org/licenses/MIT)
-[![Pull requests welcome](https://img.shields.io/badge/Pull%20Requests-welcome-green.svg?logo=github)](https://github.com/smsharma/AIrXiv)
+[![Pull requests welcome](https://img.shields.io/badge/Pull%20Requests-welcome-green.svg?logo=github)](https://github.com/smsharma/AIrXiv/pulls)
 </h4>
 
 AIrXiv is a prototype for an LLM-powered ArXiv research assistant. It is an Electron-powered app with a Flask backend and uses the OpenAI API. 
@@ -26,6 +26,8 @@ AIrXiv is a prototype for an LLM-powered ArXiv research assistant. It is an Elec
 - Frontend elements are in `static`, and backend elements are in `util` and `main.py`.
 
 ## Installation
+
+Please open an [Issue](https://github.com/smsharma/AIrXiv/issues) is you are having problems with installation. 
 
 0. (Prerequisites) Make sure you have [Node.js](https://nodejs.org/en/download) (LTS version recommended) and Python >=3.7.
 1. Clone and `cd` into the repo:
