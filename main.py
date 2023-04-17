@@ -1,6 +1,7 @@
 import os
 import shutil
 import yaml
+import re
 from types import SimpleNamespace
 
 from flask import Flask, request, render_template, jsonify, Markup
@@ -101,6 +102,7 @@ def add_arxiv_ids():
     texts_metadata = []
     for text, arxiv_id in zip(texts, arxiv_ids):
         text = text.replace("\n", " ").strip()
+        text = re.sub('\s+', ' ', text).strip()
         texts_metadata_temp = split_latex(text, window_size, stride)
         for i in range(len(texts_metadata_temp)):
             texts_metadata_temp[i]["arxiv_id"] = arxiv_id
