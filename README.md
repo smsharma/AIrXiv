@@ -8,7 +8,7 @@ AIrXiv<!-- omit from toc -->
 [![Pull requests welcome](https://img.shields.io/badge/Pull%20Requests-welcome-green.svg?logo=github)](https://github.com/smsharma/AIrXiv/pulls)
 </h4>
 
-AIrXiv is a prototype for an LLM-powered ArXiv research assistant. It is an Electron app with a Flask backend and uses the OpenAI API. 
+AIrXiv is a prototype for an LLM-powered ArXiv research assistant. It is an Electron app with a Flask backend powered by the OpenAI API. AIrXiv relies on a user-facing [OpenAI API Key](https://platform.openai.com/account/api-keys).
 
 ![Screenshot.](static/screenshot.png)
 
