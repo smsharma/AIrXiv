@@ -21,13 +21,13 @@ AIrXiv is a prototype for an LLM-powered ArXiv research assistant. It is an Elec
 
 ## Implementation Notes
 
-- AIrXiv attempts to extract the TeX source of the papers when they are added to the database. This was found to work better when it comes to transcribing equations and algorithms compared to extracting directly from the PDF. If this fails, PDF extraction is used.
-- AIrXiv uses a simple top-k similarity search (k = 3 by default) from a FAISS vector store, relying on `langchain`. k can be set in config.yml, along with the chunk size and stride length of chunks (512 and 384 by default).
+- AIrXiv attempts to extract the TeX source of the papers when they are added to the database. If this fails, PDF extraction is used.
+- AIrXiv uses a simple top-k similarity search (`k = 3` by default) from a FAISS vector store. `k` can be set in `config.yml`, along with the chunk size and stride length of chunks (512 and 384 by default).
 - Frontend elements are in `static`, and backend elements are in `util` and `main.py`.
 
 ## Installation
 
-Please open an [Issue](https://github.com/smsharma/AIrXiv/issues) is you are having problems with installation. 
+Please open an [Issue](https://github.com/smsharma/AIrXiv/issues) if you are having problems with installation. 
 
 0. (Prerequisites) Make sure you have [Node.js](https://nodejs.org/en/download) (LTS version recommended) and Python >=3.7.
 1. Clone and `cd` into the repo:
@@ -56,7 +56,7 @@ which launches the Python/Flask backend (`python main.py` or `npm run start-flas
 Usage notes:
 - Either `gpt-3.5-turbo` or `gpt-4` can be selected in the app settings. `gpt-4` is significantly better in particular at implementing code, but is about an order of magnitude more expensive (~$0.02/1000 tokens) compared `gpt-3.5-turbo`, and additionally API access is subject to a [waitlist](https://openai.com/waitlist/gpt-4-api).
 - Paper querying can be turned off by checking "Don't query papers" in the settings. This then simply relies on the general capabilities of the model.
-- **The models can hallucinate, and all output should be verified for integrity.**
+- **All output should be verified for integrity.**
 
 ## License
 
